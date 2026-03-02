@@ -20,7 +20,7 @@ h1 {
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-  max-width: 600px;
+  max-width: 650px;
   margin: auto;
   margin-bottom: 30px;
 }
@@ -85,19 +85,20 @@ button:hover {
 }
 
 .task-list {
-  max-width: 700px;
+  max-width: 750px;
   margin: auto;
 }
 
 .task-item {
   background: white;
   padding: 15px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   border-radius: 10px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: 0.3s ease;
 }
 
 .task-left {
@@ -111,7 +112,7 @@ button:hover {
 
 .overdue {
   border-left: 6px solid red;
-  background: #ffe6e6;
+  background: #ffeaea;
 }
 
 .badge {
@@ -126,7 +127,7 @@ button:hover {
 .icon-btn {
   cursor: pointer;
   font-size: 18px;
-  margin-left: 10px;
+  margin-left: 12px;
 }
 </style>
 </head>
@@ -143,7 +144,6 @@ button:hover {
   </div>
 
   <div class="row">
-
     <div class="col">
       <label>Due Date</label>
       <input type="date" id="taskDate" class="full-width">
@@ -161,7 +161,6 @@ button:hover {
         </select>
       </div>
     </div>
-
   </div>
 
   <br>
@@ -173,7 +172,8 @@ button:hover {
 <script>
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-if ("Notification" in window) {
+// Ask notification permission
+if ("Notification" in window && Notification.permission !== "granted") {
   Notification.requestPermission();
 }
 
@@ -287,23 +287,31 @@ function deleteTask(index) {
   renderTasks();
 }
 
+// 🔔 Reminder Checker (runs every 20 seconds)
 setInterval(() => {
   const now = new Date();
+
   tasks.forEach(task => {
     if (!task.completed && task.due && !task.notified) {
-      if (now >= new Date(task.due)) {
+      const due = new Date(task.due);
+
+      if (now >= due) {
         if (Notification.permission === "granted") {
-          new Notification("Task Reminder", {
-            body: task.text
+          new Notification("⏰ Task Reminder", {
+            body: task.text,
+            icon: "https://cdn-icons-png.flaticon.com/512/1827/1827392.png"
           });
         }
+
         task.notified = true;
         saveTasks();
       }
     }
   });
+
   renderTasks();
-}, 30000);
+
+}, 20000);
 
 renderTasks();
 </script>
