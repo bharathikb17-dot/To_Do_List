@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Smart ToDo App</title>
+  <title>Smart AI ToDo App</title>
 
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#317EFB">
@@ -9,7 +9,7 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       padding: 20px;
       max-width: 500px;
       margin: auto;
@@ -28,92 +28,198 @@
       border-radius: 8px;
     }
 
-    .category {
-      font-size: 12px;
-      color: blue;
+    .overdue {
+      background-color: #ffe5e5;
+      border: 1px solid red;
     }
 
-    .due {
-      font-size: 12px;
-      color: red;
+    .today {
+      background-color: #fff3cd;
+      border: 1px solid orange;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 12px;
+      margin-left: 8px;
+      color: white;
+    }
+
+    .overdue-badge {
+      background-color: red;
+    }
+
+    .today-badge {
+      background-color: orange;
+    }
+
+    #aiSuggestion {
+      margin: 10px 0;
+      font-weight: bold;
+      color: #d9534f;
     }
   </style>
 </head>
+
 <body>
 
-  <h2>Smart ToDo List</h2>
+<h2>Smart AI ToDo List</h2>
 
-  <!-- Task Input -->
-  <input type="text" id="taskInput" placeholder="Enter task">
+<input type="text" id="taskInput" placeholder="Enter task">
+<input type="datetime-local" id="dueDate">
+<button onclick="addTask()">Add Task</button>
 
-  <!-- Due Date Input -->
-  <input type="date" id="dueDate">
+<div id="aiSuggestion"></div>
+<div id="taskList"></div>
 
-  <button onclick="addTask()">Add Task</button>
+<script>
 
-  <div id="taskList"></div>
+const taskList = document.getElementById("taskList");
 
-  <script>
-    const taskList = document.getElementById("taskList");
+// Ask notification permission
+if ("Notification" in window) {
+  Notification.requestPermission();
+}
 
-    // Load tasks from localStorage
-    window.onload = function() {
-      const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-      savedTasks.forEach(task => displayTask(task));
-    };
+// Load tasks
+window.onload = function () {
+  const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  savedTasks.forEach(task => displayTask(task));
 
-    async function addTask() {
-      const taskText = document.getElementById("taskInput").value;
-      const dueDate = document.getElementById("dueDate").value;
+  updateAISuggestion();
+  checkReminders();
 
-      if (!taskText) return;
+  setInterval(checkReminders, 60000); // every 1 minute
+};
 
-      // Call Netlify function for category
-      const response = await fetch('/.netlify/functions/categorize', {
-        method: "POST",
-        body: JSON.stringify({ text: taskText })
-      });
+// Add Task
+async function addTask() {
+  const taskText = document.getElementById("taskInput").value;
+  const dueDate = document.getElementById("dueDate").value;
 
-      const data = await response.json();
-      const category = data.category || "Other";
+  if (!taskText) return;
 
-      const task = {
-        text: taskText,
-        category: category,
-        dueDate: dueDate
-      };
+  const response = await fetch('/.netlify/functions/categorize', {
+    method: "POST",
+    body: JSON.stringify({ text: taskText })
+  });
 
-      saveTask(task);
-      displayTask(task);
+  const data = await response.json();
+  const category = data.category || "Other";
 
-      document.getElementById("taskInput").value = "";
-      document.getElementById("dueDate").value = "";
+  const task = {
+    text: taskText,
+    category: category,
+    dueDate: dueDate,
+    notified: false
+  };
+
+  saveTask(task);
+  displayTask(task);
+  updateAISuggestion();
+
+  document.getElementById("taskInput").value = "";
+  document.getElementById("dueDate").value = "";
+}
+
+// Display Task
+function displayTask(task) {
+  const div = document.createElement("div");
+  div.className = "task";
+
+  let badge = "";
+  let statusClass = "";
+
+  if (task.dueDate) {
+    const now = new Date();
+    const due = new Date(task.dueDate);
+
+    if (due < now) {
+      statusClass = "overdue";
+      badge = `<span class="badge overdue-badge">OVERDUE</span>`;
+    } 
+    else {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const dueDateOnly = new Date(task.dueDate);
+      dueDateOnly.setHours(0,0,0,0);
+
+      if (dueDateOnly.getTime() === today.getTime()) {
+        statusClass = "today";
+        badge = `<span class="badge today-badge">DUE TODAY</span>`;
+      }
     }
+  }
 
-    function displayTask(task) {
-      const div = document.createElement("div");
-      div.className = "task";
+  div.classList.add(statusClass);
 
-      div.innerHTML = `
-        <strong>${task.text}</strong>
-        <div class="category">Category: ${task.category}</div>
-        <div class="due">Due: ${task.dueDate || "No date set"}</div>
-      `;
+  div.innerHTML = `
+    <strong>${task.text}</strong> ${badge}
+    <div>Category: ${task.category}</div>
+    <div>Due: ${task.dueDate || "No date set"}</div>
+  `;
 
-      taskList.appendChild(div);
+  taskList.appendChild(div);
+}
+
+// Save Task
+function saveTask(task) {
+  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  tasks.push(task);
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+// Reminder Checker
+function checkReminders() {
+  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  const now = new Date();
+
+  tasks.forEach(task => {
+    if (task.dueDate && !task.notified) {
+      const due = new Date(task.dueDate);
+
+      if (due <= now) {
+        if (Notification.permission === "granted") {
+          new Notification("⏰ Task Reminder", {
+            body: task.text
+          });
+        }
+        task.notified = true;
+      }
     }
+  });
 
-    function saveTask(task) {
-      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-      tasks.push(task);
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-    }
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  updateAISuggestion();
+}
 
-    // Register service worker
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/service-worker.js");
+// AI Suggestion
+function updateAISuggestion() {
+  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  const now = new Date();
+  let overdueCount = 0;
+
+  tasks.forEach(task => {
+    if (task.dueDate) {
+      const due = new Date(task.dueDate);
+      if (due < now) overdueCount++;
     }
-  </script>
+  });
+
+  const suggestionDiv = document.getElementById("aiSuggestion");
+
+  if (overdueCount > 0) {
+    suggestionDiv.innerText = 
+      `🤖 You have ${overdueCount} overdue task${overdueCount > 1 ? 's' : ''}. Time to focus!`;
+  } else {
+    suggestionDiv.innerText = "✅ Great job! No overdue tasks.";
+  }
+}
+
+</script>
 
 </body>
 </html>
