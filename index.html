@@ -1,293 +1,311 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Smart AI ToDo</title>
+<meta charset="UTF-8">
+<title>Smart To-Do List</title>
 
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#4f46e5">
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f6f9;
+  padding: 20px;
+}
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest"></script>
+h1 {
+  text-align: center;
+}
 
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f5f7fb;
-      margin: 0;
-      padding: 20px;
-    }
+.input-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  max-width: 600px;
+  margin: auto;
+  margin-bottom: 30px;
+}
 
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      padding: 25px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    }
+.form-group {
+  margin-bottom: 18px;
+}
 
-    h2 { margin-bottom: 5px; }
+label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px;
+}
 
-    .info {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 15px;
-    }
+input, select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      font-size: 14px;
-    }
+.full-width {
+  width: 100%;
+}
 
-    button {
-      margin-top: 15px;
-      width: 100%;
-      padding: 12px;
-      background: #4f46e5;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-    }
+.row {
+  display: flex;
+  gap: 20px;
+}
 
-    .task {
-      margin-top: 15px;
-      padding: 15px;
-      border-radius: 12px;
-      background: #f9fafb;
-      border-left: 5px solid #4f46e5;
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-    }
+.col {
+  flex: 1;
+}
 
-    .task-left {
-      flex: 1;
-    }
+.time-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
-    .task.completed {
-      opacity: 0.6;
-      text-decoration: line-through;
-    }
+.time-row input {
+  width: 60px;
+  text-align: center;
+}
 
-    .overdue {
-      border-left: 5px solid red;
-      background: #fff0f0;
-    }
+.time-row select {
+  width: 80px;
+}
 
-    .badge {
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 20px;
-      color: white;
-      margin-left: 8px;
-    }
+button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+}
 
-    .overdue-badge { background: red; }
+button:hover {
+  background: #45a049;
+}
 
-    .motivation {
-      font-size: 13px;
-      margin-top: 6px;
-      color: #4f46e5;
-    }
+.task-list {
+  max-width: 700px;
+  margin: auto;
+}
 
-    .icons {
-      display: flex;
-      gap: 10px;
-      cursor: pointer;
-    }
+.task-item {
+  background: white;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-    .icon-btn {
-      width: 18px;
-      height: 18px;
-      color: #666;
-    }
+.task-left {
+  flex: 1;
+}
 
-    .icon-btn:hover {
-      color: #4f46e5;
-    }
+.completed {
+  text-decoration: line-through;
+  color: gray;
+}
 
-    #aiSummary {
-      margin-top: 15px;
-      font-weight: 600;
-      color: #e11d48;
-    }
-  </style>
+.overdue {
+  border-left: 6px solid red;
+  background: #ffe6e6;
+}
+
+.badge {
+  background: red;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+.icon-btn {
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: 10px;
+}
+</style>
 </head>
 
 <body>
 
-<div class="container">
-  <h2>Smart AI ToDo</h2>
-  <div class="info">
-    ⏰ Select date & time (12-hour format). You’ll get a reminder at that time.
+<h1>Smart To-Do List</h1>
+
+<div class="input-card">
+
+  <div class="form-group">
+    <label>Task Name</label>
+    <input type="text" id="taskInput" class="full-width" placeholder="Enter your task..." />
   </div>
 
-  <input type="text" id="taskInput" placeholder="Enter your task...">
-  <input type="datetime-local" id="dueDate">
-  <button onclick="addTask()">Add Task</button>
+  <div class="row">
 
-  <div id="aiSummary"></div>
-  <div id="taskList"></div>
+    <div class="col">
+      <label>Due Date</label>
+      <input type="date" id="taskDate" class="full-width">
+    </div>
+
+    <div class="col">
+      <label>Reminder Time (12-hour format)</label>
+      <div class="time-row">
+        <input type="number" id="taskHour" min="1" max="12" placeholder="HH">
+        <span>:</span>
+        <input type="number" id="taskMinute" min="0" max="59" placeholder="MM">
+        <select id="taskAmPm">
+          <option>AM</option>
+          <option>PM</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <br>
+  <button onclick="addTask()">Add Task</button>
 </div>
 
-<script>
+<div class="task-list" id="taskList"></div>
 
-const taskList = document.getElementById("taskList");
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
 if ("Notification" in window) {
   Notification.requestPermission();
 }
 
-function formatTo12Hour(dateString) {
-  if (!dateString) return "No date set";
-  const date = new Date(dateString);
-  return date.toLocaleString("en-US", {
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-    day: "numeric",
-    month: "short",
-    year: "numeric"
-  });
+function saveTasks() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
 }
 
-window.onload = function () {
-  renderTasks();
-  updateAISummary();
-  setInterval(checkReminders, 60000);
-};
+function formatDateTime(dateObj) {
+  if (!dateObj) return "No due date";
+
+  let hours = dateObj.getHours();
+  let minutes = dateObj.getMinutes();
+  let ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  minutes = minutes < 10 ? '0' + minutes : minutes;
+
+  return dateObj.toDateString() + " - " + hours + ":" + minutes + " " + ampm;
+}
 
 async function addTask() {
-  const text = document.getElementById("taskInput").value;
-  const dueDate = document.getElementById("dueDate").value;
-  if (!text) return;
+  const taskText = document.getElementById("taskInput").value;
+  const date = document.getElementById("taskDate").value;
+  const hour = document.getElementById("taskHour").value;
+  const minute = document.getElementById("taskMinute").value;
+  const ampm = document.getElementById("taskAmPm").value;
 
-  const response = await fetch('/.netlify/functions/categorize', {
-    method: "POST",
-    body: JSON.stringify({ text })
-  });
+  if (!taskText) {
+    alert("Please enter task name.");
+    return;
+  }
 
-  const data = await response.json();
+  let dueDateTime = null;
 
-  const task = {
-    id: Date.now(),
-    text,
-    dueDate,
-    category: data.category,
-    motivation: data.motivation,
+  if (date && hour && minute !== "") {
+    let hour24 = parseInt(hour);
+    if (ampm === "PM" && hour24 !== 12) hour24 += 12;
+    if (ampm === "AM" && hour24 === 12) hour24 = 0;
+
+    dueDateTime = new Date(`${date}T${hour24.toString().padStart(2,"0")}:${minute.padStart(2,"0")}`);
+  }
+
+  let category = "Other";
+  try {
+    const response = await fetch("/.netlify/functions/categorize", {
+      method: "POST",
+      body: JSON.stringify({ task: taskText })
+    });
+    const data = await response.json();
+    category = data.category || "Other";
+  } catch (e) {
+    console.log("LLM not reachable");
+  }
+
+  tasks.push({
+    text: taskText,
+    due: dueDateTime,
+    category: category,
     completed: false,
     notified: false
-  };
+  });
 
-  const tasks = getTasks();
-  tasks.push(task);
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-
+  saveTasks();
   renderTasks();
-  updateAISummary();
 
   document.getElementById("taskInput").value = "";
-  document.getElementById("dueDate").value = "";
-}
-
-function getTasks() {
-  return JSON.parse(localStorage.getItem("tasks")) || [];
+  document.getElementById("taskDate").value = "";
+  document.getElementById("taskHour").value = "";
+  document.getElementById("taskMinute").value = "";
 }
 
 function renderTasks() {
-  taskList.innerHTML = "";
-  const tasks = getTasks();
-  tasks.forEach(displayTask);
-  lucide.createIcons();
+  const list = document.getElementById("taskList");
+  list.innerHTML = "";
+
+  tasks.forEach((task, index) => {
+    const now = new Date();
+    const dueDate = task.due ? new Date(task.due) : null;
+    const isOverdue = dueDate && now > dueDate && !task.completed;
+
+    const div = document.createElement("div");
+    div.className = "task-item";
+    if (isOverdue) div.classList.add("overdue");
+
+    div.innerHTML = `
+      <div class="task-left ${task.completed ? "completed" : ""}">
+        <strong>${task.text}</strong><br>
+        ${formatDateTime(dueDate)}
+        ${isOverdue ? '<span class="badge">OVERDUE</span>' : ""}
+        <br><small>Category: ${task.category}</small>
+      </div>
+      <div>
+        <span class="icon-btn" onclick="toggleComplete(${index})">✔</span>
+        <span class="icon-btn" onclick="deleteTask(${index})">🗑</span>
+      </div>
+    `;
+
+    list.appendChild(div);
+  });
 }
 
-function displayTask(task) {
-  const div = document.createElement("div");
-  div.className = "task";
-
-  if (task.completed) div.classList.add("completed");
-
-  const now = new Date();
-  const due = new Date(task.dueDate);
-
-  let badge = "";
-  if (task.dueDate && due < now && !task.completed) {
-    div.classList.add("overdue");
-    badge = `<span class="badge overdue-badge">OVERDUE</span>`;
-  }
-
-  div.innerHTML = `
-    <div class="task-left">
-      <strong>${task.text}</strong> ${badge}
-      <div>Category: ${task.category}</div>
-      <div>Due: ${formatTo12Hour(task.dueDate)}</div>
-      <div class="motivation">🤖 ${task.motivation}</div>
-    </div>
-    <div class="icons">
-      <i data-lucide="check" class="icon-btn" onclick="toggleComplete(${task.id})"></i>
-      <i data-lucide="trash-2" class="icon-btn" onclick="deleteTask(${task.id})"></i>
-    </div>
-  `;
-
-  taskList.appendChild(div);
-}
-
-function toggleComplete(id) {
-  const tasks = getTasks();
-  const task = tasks.find(t => t.id === id);
-  task.completed = !task.completed;
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+function toggleComplete(index) {
+  tasks[index].completed = !tasks[index].completed;
+  saveTasks();
   renderTasks();
-  updateAISummary();
 }
 
-function deleteTask(id) {
-  let tasks = getTasks();
-  tasks = tasks.filter(t => t.id !== id);
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+function deleteTask(index) {
+  tasks.splice(index, 1);
+  saveTasks();
   renderTasks();
-  updateAISummary();
 }
 
-function checkReminders() {
-  const tasks = getTasks();
+setInterval(() => {
   const now = new Date();
-
   tasks.forEach(task => {
-    if (task.dueDate && !task.notified && !task.completed) {
-      const due = new Date(task.dueDate);
-      if (due <= now) {
+    if (!task.completed && task.due && !task.notified) {
+      if (now >= new Date(task.due)) {
         if (Notification.permission === "granted") {
-          new Notification("⏰ Task Reminder", { body: task.text });
+          new Notification("Task Reminder", {
+            body: task.text
+          });
         }
         task.notified = true;
+        saveTasks();
       }
     }
   });
+  renderTasks();
+}, 30000);
 
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-
-function updateAISummary() {
-  const tasks = getTasks();
-  const now = new Date();
-  const overdue = tasks.filter(t => t.dueDate && new Date(t.dueDate) < now && !t.completed).length;
-
-  const summary = document.getElementById("aiSummary");
-
-  if (overdue > 0) {
-    summary.innerText = `⚠ You have ${overdue} overdue task(s). Let's take action!`;
-  } else {
-    summary.innerText = "✅ You're on track. Keep going!";
-  }
-}
-
+renderTasks();
 </script>
 
 </body>
