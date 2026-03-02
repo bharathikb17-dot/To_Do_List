@@ -1,6 +1,41 @@
 export async function handler(event) {
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ message: "Function is working" })
-  };
+    try {
+        const { task } = JSON.parse(event.body);
+
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "system",
+                        content: "Categorize the following task into one short category like Work, Personal, Health, Study, Shopping, Finance, or Other. Respond with only the category name."
+                    },
+                    {
+                        role: "user",
+                        content: task
+                    }
+                ],
+                max_tokens: 10
+            })
+        });
+
+        const data = await response.json();
+        const category = data.choices[0].message.content.trim();
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ category })
+        };
+
+    } catch (error) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: "Failed" })
+        };
+    }
 }
