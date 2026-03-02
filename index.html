@@ -1,196 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart AI To-Do</title>
+  <title>Smart ToDo App</title>
 
-<style>
-body {
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    color: white;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    padding: 40px 20px;
-}
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#317EFB">
+  <meta name="apple-mobile-web-app-capable" content="yes">
 
-.container {
-    width: 600px;
-    background: rgba(255,255,255,0.05);
-    padding: 30px;
-    border-radius: 20px;
-    backdrop-filter: blur(10px);
-}
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
 
-h1 {
-    text-align: center;
-    margin-bottom: 30px;
-}
+    input, button {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+    }
 
-.input-group {
-    display: flex;
-    gap: 10px;
-}
+    .task {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
 
-input {
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-}
+    .category {
+      font-size: 12px;
+      color: blue;
+    }
 
-button {
-    padding: 12px 16px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.add-btn {
-    background: #3b82f6;
-    color: white;
-}
-
-.task {
-    background: rgba(255,255,255,0.08);
-    padding: 15px;
-    border-radius: 12px;
-    margin-top: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.task.completed span {
-    text-decoration: line-through;
-    opacity: 0.6;
-}
-
-.category {
-    font-size: 12px;
-    opacity: 0.7;
-    margin-top: 4px;
-}
-
-.task-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.complete-btn {
-    background: #22c55e;
-    color: white;
-}
-
-.delete-btn {
-    background: #ef4444;
-    color: white;
-}
-</style>
+    .due {
+      font-size: 12px;
+      color: red;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="container">
-    <h1>Smart To-Do List 🤖</h1>
+  <h2>Smart ToDo List</h2>
 
-    <div class="input-group">
-        <input type="text" id="taskInput" placeholder="Enter your task...">
-        <button class="add-btn" onclick="addTask()">Add</button>
-    </div>
+  <!-- Task Input -->
+  <input type="text" id="taskInput" placeholder="Enter task">
 
-    <div id="taskList"></div>
-</div>
+  <!-- Due Date Input -->
+  <input type="date" id="dueDate">
 
-<script>
+  <button onclick="addTask()">Add Task</button>
 
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  <div id="taskList"></div>
 
-async function categorizeTask(taskText) {
-    try {
-        const response = await fetch("/.netlify/functions/categorize", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ task: taskText })
-        });
+  <script>
+    const taskList = document.getElementById("taskList");
 
-        const data = await response.json();
-        return data.category || "Other";
-    } catch (error) {
-        return "Other";
-    }
-}
-
-async function addTask() {
-    const input = document.getElementById("taskInput");
-    const text = input.value.trim();
-    if (!text) return;
-
-    input.value = "";
-
-    const category = await categorizeTask(text);
-
-    const newTask = {
-        id: Date.now(),
-        text,
-        completed: false,
-        category
+    // Load tasks from localStorage
+    window.onload = function() {
+      const savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      savedTasks.forEach(task => displayTask(task));
     };
 
-    tasks.push(newTask);
-    saveTasks();
-    renderTasks();
-}
+    async function addTask() {
+      const taskText = document.getElementById("taskInput").value;
+      const dueDate = document.getElementById("dueDate").value;
 
-function toggleTask(id) {
-    tasks = tasks.map(task =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-    );
-    saveTasks();
-    renderTasks();
-}
+      if (!taskText) return;
 
-function deleteTask(id) {
-    tasks = tasks.filter(task => task.id !== id);
-    saveTasks();
-    renderTasks();
-}
+      // Call Netlify function for category
+      const response = await fetch('/.netlify/functions/categorize', {
+        method: "POST",
+        body: JSON.stringify({ text: taskText })
+      });
 
-function saveTasks() {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-}
+      const data = await response.json();
+      const category = data.category || "Other";
 
-function renderTasks() {
-    const list = document.getElementById("taskList");
-    list.innerHTML = "";
+      const task = {
+        text: taskText,
+        category: category,
+        dueDate: dueDate
+      };
 
-    tasks.forEach(task => {
-        const div = document.createElement("div");
-        div.className = "task" + (task.completed ? " completed" : "");
+      saveTask(task);
+      displayTask(task);
 
-        div.innerHTML = `
-            <div>
-                <span>${task.text}</span>
-                <div class="category">Category: ${task.category}</div>
-            </div>
-            <div class="task-buttons">
-                <button class="complete-btn" onclick="toggleTask(${task.id})">
-                    ${task.completed ? "Undo" : "Done"}
-                </button>
-                <button class="delete-btn" onclick="deleteTask(${task.id})">
-                    Delete
-                </button>
-            </div>
-        `;
-        list.appendChild(div);
-    });
-}
+      document.getElementById("taskInput").value = "";
+      document.getElementById("dueDate").value = "";
+    }
 
-renderTasks();
+    function displayTask(task) {
+      const div = document.createElement("div");
+      div.className = "task";
 
-</script>
+      div.innerHTML = `
+        <strong>${task.text}</strong>
+        <div class="category">Category: ${task.category}</div>
+        <div class="due">Due: ${task.dueDate || "No date set"}</div>
+      `;
+
+      taskList.appendChild(div);
+    }
+
+    function saveTask(task) {
+      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      tasks.push(task);
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    // Register service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js");
+    }
+  </script>
+
 </body>
 </html>
